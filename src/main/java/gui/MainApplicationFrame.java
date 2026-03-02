@@ -7,14 +7,53 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Map;
 
 /**
  * Главное окно приложения.
  * Содержит рабочую область, окно логов, игровое окно и верхнее меню.
  * Также отвечает за переключение темы оформления и корректное закрытие программы.
  */
-public class MainApplicationFrame extends JFrame
-{
+public class MainApplicationFrame extends JFrame implements SaveAndRestoreState {
+
+    /**
+     * Объект для чтения и записи состояния приложения в файл.
+     */
+    private final StateIO stateIO = new StateIO();
+
+    /**
+     * Координатор сохранения и восстановления состояния всех компонентов.
+     */
+    private final StateManager stateManager = new StateManager();
+
+
+    @Override
+    public String getStatePrefix() {
+        return "main";
+    }
+
+    @Override
+    public void saveState(Map<String, String> map) {
+        map.put("x", String.valueOf(getX()));
+        map.put("y", String.valueOf(getY()));
+        map.put("w", String.valueOf(getWidth()));
+        map.put("h", String.valueOf(getHeight()));
+        map.put("state", String.valueOf(getExtendedState()));
+    }
+
+    @Override
+    public void loadState(Map<String, String> map) {
+        try {
+            int x = Integer.parseInt(map.get("x"));
+            int y = Integer.parseInt(map.get("y"));
+            int w = Integer.parseInt(map.get("w"));
+            int h = Integer.parseInt(map.get("h"));
+            int state = Integer.parseInt(map.get("state"));
+
+            setBounds(x, y, w, h);
+            setExtendedState(state);
+        } catch (Exception ignored) {}
+    }
 
     /**
      * Рабочая область главного окна.
@@ -51,9 +90,6 @@ public class MainApplicationFrame extends JFrame
         // Установка меню
         setJMenuBar(generateMenuBar());
 
-        // Стандартное поведение при закрытии
-        //setDefaultCloseOperation(EXIT_ON_CLOSE);
-
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
@@ -61,6 +97,13 @@ public class MainApplicationFrame extends JFrame
                 exitApplication();
             }
         });
+
+        stateManager.register(this);
+        stateManager.register(logWindow);
+        stateManager.register(gameWindow);
+
+        Map<String, String> root = stateIO.load();
+        stateManager.loadAll(root);
     }
 
     /**
@@ -75,8 +118,8 @@ public class MainApplicationFrame extends JFrame
         logWindow.setSize(300, 800);
 
         // Устанавливаем минимальный размер главного окна
-        setMinimumSize(logWindow.getSize());
-        logWindow.pack();
+        //setMinimumSize(logWindow.getSize());
+        //logWindow.pack();
         Logger.debug("Протокол работает");
         return logWindow;
     }
@@ -92,7 +135,6 @@ public class MainApplicationFrame extends JFrame
         desktopPane.add(frame);
         frame.setVisible(true);
     }
-
 
     /**
      * Создаёт верхнюю панель меню приложения.
@@ -208,6 +250,9 @@ public class MainApplicationFrame extends JFrame
         );
 
         if (result == JOptionPane.YES_OPTION) {
+            Map<String, String> root = stateManager.saveAll();
+            stateIO.save(root);
+
             dispose();
             System.exit(0);
         }
