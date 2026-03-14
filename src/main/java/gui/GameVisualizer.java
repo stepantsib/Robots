@@ -27,7 +27,7 @@ public class GameVisualizer extends JPanel implements PropertyChangeListener {
     /**
      * Модель(логика) робота.
      */
-    private RobotModel model;
+    private final RobotModel model;
 
     /**
      * Создаёт компонент визуализации и подписывается на изменения модели.
@@ -39,19 +39,12 @@ public class GameVisualizer extends JPanel implements PropertyChangeListener {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                onRedrawEvent();
-            }
-        }, 0, 50);
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
                 model.onModelUpdateEvent();
             }
         }, 0, 10);
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                System.out.println("Click at: " + e.getPoint());
                 model.setTargetPosition(e.getPoint());
                 repaint();
             }
@@ -89,21 +82,14 @@ public class GameVisualizer extends JPanel implements PropertyChangeListener {
     }
 
     /**
-     * Запрашивает перерисовку компонента
-     */
-    protected void onRedrawEvent() {
-        EventQueue.invokeLater(this::repaint);
-    }
-
-    /**
      * Отрисовывает робота на игровом поле.
      */
     private void drawRobot(Graphics2D g, int x, int y, double direction) {
-        AffineTransform old = g.getTransform();  // сохраняем старую трансформацию
+        AffineTransform old = g.getTransform();
         int robotCenterX = round(x);
         int robotCenterY = round(y);
-        AffineTransform t = AffineTransform.getRotateInstance(direction, robotCenterX, robotCenterY);
-        g.setTransform(t);
+
+        g.rotate(direction, robotCenterX, robotCenterY);
 
         g.setColor(Color.MAGENTA);
         fillOval(g, robotCenterX, robotCenterY, 30, 10);
@@ -114,15 +100,14 @@ public class GameVisualizer extends JPanel implements PropertyChangeListener {
         g.setColor(Color.BLACK);
         drawOval(g, robotCenterX + 10, robotCenterY, 5, 5);
 
-        g.setTransform(old);  // восстанавливаем старую трансформацию
+        g.setTransform(old);
     }
 
     /**
      * Отрисовывает целевую точку движения робота.
      */
     private void drawTarget(Graphics2D g, int x, int y) {
-        AffineTransform t = AffineTransform.getRotateInstance(0, 0, 0);
-        g.setTransform(t);
+
         g.setColor(Color.GREEN);
         fillOval(g, x, y, 5, 5);
         g.setColor(Color.BLACK);

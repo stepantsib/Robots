@@ -48,10 +48,7 @@ public class RobotPositionWindow extends JInternalFrame implements SaveAndRestor
      * Обновляет текст метки с текущими координатами и направлением робота.
      */
     private void updateText() {
-        String text = String.format( "X: %.2f Y: %.2f Direction: %.2f",
-                model.getRobotPositionX(),
-                model.getRobotPositionY(),
-                model.getRobotDirection() * 180 / Math.PI );
+        String text = String.format("X: %.2f Y: %.2f Direction: %.2f", model.getRobotPositionX(), model.getRobotPositionY(), model.getRobotDirection() * 180 / Math.PI);
         positionLabel.setText(text);
     }
 
@@ -65,6 +62,7 @@ public class RobotPositionWindow extends JInternalFrame implements SaveAndRestor
             updateText();
         }
     }
+
     @Override
     public String getStatePrefix() {
         return "robotPosition";

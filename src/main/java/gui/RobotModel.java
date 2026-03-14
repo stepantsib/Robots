@@ -175,14 +175,6 @@ public class RobotModel {
         if (distance < 0.5) return;
         double angleToTarget = angleTo(robotPositionX, robotPositionY,
                 targetPositionX, targetPositionY);
-        /*
-        double angularVelocity = 0;
-        if (angleToTarget > robotDirection) {
-            angularVelocity = MAX_ANGULAR_VELOCITY;
-        }
-        if (angleToTarget < robotDirection) {
-            angularVelocity = -MAX_ANGULAR_VELOCITY;
-        } */
 
         double angleDiff = normalizeAngle(angleToTarget - robotDirection);
 

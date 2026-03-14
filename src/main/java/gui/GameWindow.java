@@ -28,6 +28,7 @@ public class GameWindow extends JInternalFrame implements SaveAndRestoreState {
         this.model = model;
         super("Игровое поле", true, true, true, true);
         gameVisualizer = new GameVisualizer(model);
+
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(gameVisualizer, BorderLayout.CENTER);
         getContentPane().add(panel);

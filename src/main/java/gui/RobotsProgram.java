@@ -7,12 +7,13 @@ import javax.swing.*;
  * Отвечает за запуск программы и создание главного окна.
  */
 public class RobotsProgram {
+
     /**
      * Главный метод программы.
      * Устанавливает тему оформления интерфейса
      * и запускает главное окно приложения.
      */
-    public static void main(String[] args) {
+    static void main(String[] args) {
         try {
             UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
 //        UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
@@ -23,9 +24,7 @@ public class RobotsProgram {
         }
         SwingUtilities.invokeLater(() -> {
             MainApplicationFrame frame = new MainApplicationFrame();
-            //frame.pack();
             frame.setVisible(true);
-            //frame.setExtendedState(Frame.MAXIMIZED_BOTH);
         });
     }
 }
