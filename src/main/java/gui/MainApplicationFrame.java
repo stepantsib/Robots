@@ -83,9 +83,12 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         addWindow(logWindow);
 
         // Создание и добавление игрового окна
-        GameWindow gameWindow = new GameWindow();
+        RobotModel model = new RobotModel();
+        GameWindow gameWindow = new GameWindow(model);
+        RobotPositionWindow positionWindow = new RobotPositionWindow(model);
         gameWindow.setSize(400,  400);
         addWindow(gameWindow);
+        addWindow(positionWindow);
 
         // Установка меню
         setJMenuBar(generateMenuBar());
@@ -101,6 +104,7 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         stateManager.register(this);
         stateManager.register(logWindow);
         stateManager.register(gameWindow);
+        stateManager.register(positionWindow);
 
         Map<String, String> root = stateIO.load();
         stateManager.loadAll(root);

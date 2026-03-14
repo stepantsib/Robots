@@ -5,202 +5,148 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class GameVisualizer extends JPanel
-{
-    private final Timer timer = initTimer();
-    
-    private static Timer initTimer() 
-    {
-        Timer timer = new Timer("events generator", true);
-        return timer;
-    }
-    
-    private volatile double robotPositionX = 100;
-    private volatile double robotPositionY = 100; 
-    private volatile double robotDirection = 0; 
+/**
+ * Компонент визуализации игрового процесса.
+ * Отображает робота и целевую точку на игровом поле,
+ * а также обрабатывает пользовательские клики для задания новой цели.
+ * Подписывается на изменения модели и перерисовывает поле
+ * при обновлении состояния робота.
+ */
+public class GameVisualizer extends JPanel implements PropertyChangeListener {
 
-    private volatile int targetPositionX = 150;
-    private volatile int targetPositionY = 100;
-    
-    private static final double MAX_VELOCITY = 0.1;
-    private static final double MAX_ANGULAR_VELOCITY = 0.001;
-    
-    public GameVisualizer() 
-    {
-        timer.schedule(new TimerTask()
-        {
+    /**
+     * Таймер, генерирующий события перерисовки и обновления модели.
+     */
+    private final java.util.Timer timer = initTimer();
+
+    /**
+     * Модель(логика) робота.
+     */
+    private RobotModel model;
+
+    /**
+     * Создаёт компонент визуализации и подписывается на изменения модели.
+     * Также запускает таймеры для обновления состояния и перерисовки.
+     */
+    public GameVisualizer(RobotModel model) {
+        this.model = model;
+        model.addPropertyChangeListener(this);
+        timer.schedule(new TimerTask() {
             @Override
-            public void run()
-            {
+            public void run() {
                 onRedrawEvent();
             }
         }, 0, 50);
-        timer.schedule(new TimerTask()
-        {
+        timer.schedule(new TimerTask() {
             @Override
-            public void run()
-            {
-                onModelUpdateEvent();
+            public void run() {
+                model.onModelUpdateEvent();
             }
         }, 0, 10);
-        addMouseListener(new MouseAdapter()
-        {
+        addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e)
-            {
-                setTargetPosition(e.getPoint());
+            public void mouseClicked(MouseEvent e) {
+                System.out.println("Click at: " + e.getPoint());
+                model.setTargetPosition(e.getPoint());
                 repaint();
             }
         });
         setDoubleBuffered(true);
     }
 
-    protected void setTargetPosition(Point p)
-    {
-        targetPositionX = p.x;
-        targetPositionY = p.y;
+    /**
+     * Создаёт таймер для генерации событий обновления.
+     */
+    private static java.util.Timer initTimer() {
+        java.util.Timer timer = new Timer("events generator", true);
+        return timer;
     }
-    
-    protected void onRedrawEvent()
-    {
+
+    /**
+     * Округляет значение до ближайшего целого числа.
+     */
+    private static int round(double value) {
+        return (int) (value + 0.5);
+    }
+
+    /**
+     * Рисует закрашенный овал с центром в заданной точке.
+     */
+    private static void fillOval(Graphics g, int centerX, int centerY, int diam1, int diam2) {
+        g.fillOval(centerX - diam1 / 2, centerY - diam2 / 2, diam1, diam2);
+    }
+
+    /**
+     * Рисует контур овала с центром в заданной точке.
+     */
+    private static void drawOval(Graphics g, int centerX, int centerY, int diam1, int diam2) {
+        g.drawOval(centerX - diam1 / 2, centerY - diam2 / 2, diam1, diam2);
+    }
+
+    /**
+     * Запрашивает перерисовку компонента
+     */
+    protected void onRedrawEvent() {
         EventQueue.invokeLater(this::repaint);
     }
 
-    private static double distance(double x1, double y1, double x2, double y2)
-    {
-        double diffX = x1 - x2;
-        double diffY = y1 - y2;
-        return Math.sqrt(diffX * diffX + diffY * diffY);
-    }
-    
-    private static double angleTo(double fromX, double fromY, double toX, double toY)
-    {
-        double diffX = toX - fromX;
-        double diffY = toY - fromY;
-        
-        return asNormalizedRadians(Math.atan2(diffY, diffX));
-    }
-    
-    protected void onModelUpdateEvent()
-    {
-        double distance = distance(targetPositionX, targetPositionY, 
-            robotPositionX, robotPositionY);
-        if (distance < 0.5)
-        {
-            return;
-        }
-        double velocity = MAX_VELOCITY;
-        double angleToTarget = angleTo(robotPositionX, robotPositionY,
-                targetPositionX, targetPositionY);
-        double angularVelocity = 0;
-        if (angleToTarget > robotDirection)
-        {
-            angularVelocity = MAX_ANGULAR_VELOCITY;
-        }
-        if (angleToTarget < robotDirection)
-        {
-            angularVelocity = -MAX_ANGULAR_VELOCITY;
-        }
-        
-        moveRobot(velocity, angularVelocity, 10);
-    }
-    
-    private static double applyLimits(double value, double min, double max)
-    {
-        if (value < min)
-            return min;
-        if (value > max)
-            return max;
-        return value;
-    }
-    
-    private void moveRobot(double velocity, double angularVelocity, double duration)
-    {
-        velocity = applyLimits(velocity, 0, MAX_VELOCITY);
-        angularVelocity = applyLimits(angularVelocity, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
-        double newX = robotPositionX + velocity / angularVelocity * 
-            (Math.sin(robotDirection  + angularVelocity * duration) -
-                Math.sin(robotDirection));
-        if (!Double.isFinite(newX))
-        {
-            newX = robotPositionX + velocity * duration * Math.cos(robotDirection);
-        }
-        double newY = robotPositionY - velocity / angularVelocity * 
-            (Math.cos(robotDirection  + angularVelocity * duration) -
-                Math.cos(robotDirection));
-        if (!Double.isFinite(newY))
-        {
-            newY = robotPositionY + velocity * duration * Math.sin(robotDirection);
-        }
-        robotPositionX = newX;
-        robotPositionY = newY;
-        double newDirection = asNormalizedRadians(robotDirection + angularVelocity * duration); 
-        robotDirection = newDirection;
-    }
-
-    private static double asNormalizedRadians(double angle)
-    {
-        while (angle < 0)
-        {
-            angle += 2*Math.PI;
-        }
-        while (angle >= 2*Math.PI)
-        {
-            angle -= 2*Math.PI;
-        }
-        return angle;
-    }
-    
-    private static int round(double value)
-    {
-        return (int)(value + 0.5);
-    }
-    
-    @Override
-    public void paint(Graphics g)
-    {
-        super.paint(g);
-        Graphics2D g2d = (Graphics2D)g; 
-        drawRobot(g2d, round(robotPositionX), round(robotPositionY), robotDirection);
-        drawTarget(g2d, targetPositionX, targetPositionY);
-    }
-    
-    private static void fillOval(Graphics g, int centerX, int centerY, int diam1, int diam2)
-    {
-        g.fillOval(centerX - diam1 / 2, centerY - diam2 / 2, diam1, diam2);
-    }
-    
-    private static void drawOval(Graphics g, int centerX, int centerY, int diam1, int diam2)
-    {
-        g.drawOval(centerX - diam1 / 2, centerY - diam2 / 2, diam1, diam2);
-    }
-    
-    private void drawRobot(Graphics2D g, int x, int y, double direction)
-    {
-        int robotCenterX = round(robotPositionX); 
-        int robotCenterY = round(robotPositionY);
-        AffineTransform t = AffineTransform.getRotateInstance(direction, robotCenterX, robotCenterY); 
+    /**
+     * Отрисовывает робота на игровом поле.
+     */
+    private void drawRobot(Graphics2D g, int x, int y, double direction) {
+        AffineTransform old = g.getTransform();  // сохраняем старую трансформацию
+        int robotCenterX = round(x);
+        int robotCenterY = round(y);
+        AffineTransform t = AffineTransform.getRotateInstance(direction, robotCenterX, robotCenterY);
         g.setTransform(t);
+
         g.setColor(Color.MAGENTA);
         fillOval(g, robotCenterX, robotCenterY, 30, 10);
         g.setColor(Color.BLACK);
         drawOval(g, robotCenterX, robotCenterY, 30, 10);
         g.setColor(Color.WHITE);
-        fillOval(g, robotCenterX  + 10, robotCenterY, 5, 5);
+        fillOval(g, robotCenterX + 10, robotCenterY, 5, 5);
         g.setColor(Color.BLACK);
-        drawOval(g, robotCenterX  + 10, robotCenterY, 5, 5);
+        drawOval(g, robotCenterX + 10, robotCenterY, 5, 5);
+
+        g.setTransform(old);  // восстанавливаем старую трансформацию
     }
-    
-    private void drawTarget(Graphics2D g, int x, int y)
-    {
-        AffineTransform t = AffineTransform.getRotateInstance(0, 0, 0); 
+
+    /**
+     * Отрисовывает целевую точку движения робота.
+     */
+    private void drawTarget(Graphics2D g, int x, int y) {
+        AffineTransform t = AffineTransform.getRotateInstance(0, 0, 0);
         g.setTransform(t);
         g.setColor(Color.GREEN);
         fillOval(g, x, y, 5, 5);
         g.setColor(Color.BLACK);
         drawOval(g, x, y, 5, 5);
+    }
+
+    /**
+     * Основной метод отрисовки компонента.
+     * Вызывает методы отображения робота и целевой точки.
+     */
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);  // очищает фон
+        Graphics2D g2d = (Graphics2D) g;
+        drawRobot(g2d, round(model.getRobotPositionX()), round(model.getRobotPositionY()), model.getRobotDirection());
+        drawTarget(g2d, model.getTargetPositionX(), model.getTargetPositionY());
+    }
+
+    /**
+     * Обрабатывает событие изменения состояния модели
+     * и инициирует перерисовку игрового поля.
+     */
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        repaint();
     }
 }
