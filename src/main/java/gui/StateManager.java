@@ -28,13 +28,6 @@ public class StateManager {
     }
 
     /**
-     * Удаляет компонент из списка зарегистрированных.
-     */
-    public void unregister(SaveAndRestoreState component) {
-        components.remove(component);
-    }
-
-    /**
      * Собирает общее состояние всех зарегистрированных компонентов в один словарь.
      * Для каждого компонента используется его префикс.
      */
