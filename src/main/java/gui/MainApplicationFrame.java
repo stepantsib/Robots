@@ -121,9 +121,6 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         logWindow.setLocation(10,10);
         logWindow.setSize(300, 800);
 
-        // Устанавливаем минимальный размер главного окна
-        //setMinimumSize(logWindow.getSize());
-        //logWindow.pack();
         Logger.debug("Протокол работает");
         return logWindow;
     }

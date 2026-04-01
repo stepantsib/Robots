@@ -72,18 +72,6 @@ public class RobotModel {
         return normalizeAngle(Math.atan2(diffY, diffX));
     }
 
-    /**
-     * Нормализует угол в диапазон от 0 до 2π.
-     */
-    private static double asNormalizedRadians(double angle) {
-        while (angle < 0) {
-            angle += 2 * Math.PI;
-        }
-        while (angle >= 2 * Math.PI) {
-            angle -= 2 * Math.PI;
-        }
-        return angle;
-    }
 
     /**
      * Ограничивает значение заданным диапазоном.
@@ -178,14 +166,12 @@ public class RobotModel {
 
         double angleDiff = normalizeAngle(angleToTarget - robotDirection);
 
-        double angularVelocity = 0;
-
-        if (angleDiff > 0) {
-            angularVelocity = MAX_ANGULAR_VELOCITY;
-        } else if (angleDiff < 0) {
-            angularVelocity = -MAX_ANGULAR_VELOCITY;
+        if (angleDiff > Math.PI) {
+            angleDiff -= 2 * Math.PI;
+        } else if (angleDiff < -Math.PI) {
+            angleDiff += 2 * Math.PI;
         }
-
+        double angularVelocity = angleDiff > 0 ? MAX_ANGULAR_VELOCITY : -MAX_ANGULAR_VELOCITY;
         moveRobot(MAX_VELOCITY, angularVelocity, 10);
     }
 
