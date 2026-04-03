@@ -1,5 +1,7 @@
 package gui;
 
+import gui.saveState.SaveAndRestoreState;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
@@ -21,7 +23,8 @@ public class GameWindow extends JInternalFrame implements SaveAndRestoreState {
      */
     public GameWindow() {
         super("Игровое поле", true, true, true, true);
-        gameVisualizer = new GameVisualizer();
+        RobotModel model = new RobotModel();
+        gameVisualizer = new GameVisualizer(model);
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(gameVisualizer, BorderLayout.CENTER);
         getContentPane().add(panel);

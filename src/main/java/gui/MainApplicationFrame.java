@@ -1,5 +1,8 @@
 package gui;
 
+import gui.saveState.SaveAndRestoreState;
+import gui.saveState.StateIO;
+import gui.saveState.StateManager;
 import log.Logger;
 
 import javax.swing.*;
@@ -82,11 +85,16 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         LogWindow logWindow = createLogWindow();
         addWindow(logWindow);
 
+        RobotModel model = new RobotModel();
+        GameVisualizer gameVisualizer = new GameVisualizer(model);
+        RobotController controller = new RobotController(model, gameVisualizer);
         // Создание и добавление игрового окна
         GameWindow gameWindow = new GameWindow();
         gameWindow.setSize(400,  400);
+        gameWindow.setContentPane(gameVisualizer);
         addWindow(gameWindow);
-
+        RobotInfoWindow robotInfoWindow = new RobotInfoWindow(model);
+        addWindow(robotInfoWindow);
         // Установка меню
         setJMenuBar(generateMenuBar());
 
@@ -98,12 +106,16 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
             }
         });
 
+
         stateManager.register(this);
         stateManager.register(logWindow);
         stateManager.register(gameWindow);
+        stateManager.register(robotInfoWindow);
 
         Map<String, String> root = stateIO.load();
         stateManager.loadAll(root);
+
+        controller.start();
     }
 
     /**
@@ -117,9 +129,6 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         logWindow.setLocation(10,10);
         logWindow.setSize(300, 800);
 
-        // Устанавливаем минимальный размер главного окна
-        //setMinimumSize(logWindow.getSize());
-        //logWindow.pack();
         Logger.debug("Протокол работает");
         return logWindow;
     }
