@@ -106,6 +106,6 @@ public class RobotInfoWindow extends JInternalFrame implements PropertyChangeLis
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        EventQueue.invokeLater(this::updateInfoContent);
+        updateInfoContent();
     }
 }

@@ -39,57 +39,64 @@ public class RobotController {
             public void run() {
                 SwingUtilities.invokeLater(() -> onModelUpdateEvent());
             }
-        }, 0, (long) 10);
+        }, 0, 10);
     }
 
-    protected void onModelUpdateEvent() {
-        double x = model.getRobotPositionX();
-        double y = model.getRobotPositionY();
-        double dir = model.getRobotDirection();
-
-        double tx = model.getTargetPositionX();
-        double ty = model.getTargetPositionY();
-
-        double distance = distance(tx, ty, x, y);
-
-        // Захват цели
-        if (distance <= 2.0) {
-            model.setRobotState(tx, ty, dir);
+    protected void onModelUpdateEvent()
+    {
+        double distance = distance(model.getTargetPositionX(), model.getTargetPositionY(),
+                model.getRobotPositionX(), model.getRobotPositionY());
+        if (distance < 0.5)
+        {
             return;
         }
 
-        double targetAngle = angleTo(x, y, tx, ty);
-        double angleDiff = normalizeToPi(targetAngle - dir);
+        double velocity = MAX_VELOCITY;
+        double angleToTarget = angleTo(model.getRobotPositionX(), model.getRobotPositionY(),
+                    model.getTargetPositionX(), model.getTargetPositionY());
 
-        double maxTurn = MAX_ANGULAR_VELOCITY * 10;
-        double turn = applyLimits(angleDiff, -maxTurn, maxTurn);
+        //берём кратчайшую разницу углов в диапазоне (-PI, PI]
+        double angleDiff = normalizeToPi(angleToTarget - model.getRobotDirection());
 
-        double velocity = (Math.abs(angleDiff) < Math.PI / 4) ? MAX_VELOCITY : 0.0;
-
-        moveRobot(velocity, turn, 10);
-    }
-
-    private void moveRobot(double velocity, double turnAngle, double duration) {
-        double x = model.getRobotPositionX();
-        double y = model.getRobotPositionY();
-        double dir = model.getRobotDirection();
-
-        double newDir = asNormalizedRadians(dir + turnAngle);
-
-        double tx = model.getTargetPositionX();
-        double ty = model.getTargetPositionY();
-        double distToTarget = distance(tx, ty, x, y);
-
-        double step = velocity * duration;
-        if (step >= distToTarget) {
-            model.setRobotState(tx, ty, newDir);
-            return;
+        double angularVelocity = 0;
+        if (angleDiff > 0)
+        {
+            angularVelocity = MAX_ANGULAR_VELOCITY;
+        }
+        if (angleDiff < 0)
+        {
+            angularVelocity = -MAX_ANGULAR_VELOCITY;
         }
 
-        double newX = x + step * Math.cos(newDir);
-        double newY = y + step * Math.sin(newDir);
+        moveRobot(velocity, angularVelocity, 10);
+    }
 
-        model.setRobotState(newX, newY, newDir);
+    private void moveRobot(double velocity, double angularVelocity, double duration) {
+
+        velocity = applyLimits(velocity, 0, MAX_VELOCITY);
+        angularVelocity = applyLimits(angularVelocity, -MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
+
+        double robotPositionX = model.getRobotPositionX();
+        double robotPositionY = model.getRobotPositionY();
+        double robotDirection = model.getRobotDirection();
+
+        double newX = robotPositionX + velocity / angularVelocity *
+                (Math.sin(robotDirection + angularVelocity * duration) -
+                        Math.sin(robotDirection));
+        if (!Double.isFinite(newX)) {
+            newX = robotPositionX + velocity * duration * Math.cos(robotDirection);
+        }
+
+        double newY = robotPositionY - velocity / angularVelocity *
+                (Math.cos(robotDirection + angularVelocity * duration) -
+                        Math.cos(robotDirection));
+        if (!Double.isFinite(newY)) {
+            newY = robotPositionY + velocity * duration * Math.sin(robotDirection);
+        }
+
+        double newDirection = asNormalizedRadians(robotDirection + angularVelocity * duration);
+
+        model.setRobotState(newX, newY, newDirection);
     }
 
     private static double distance(double x1, double y1, double x2, double y2) {
