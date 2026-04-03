@@ -1,5 +1,6 @@
 package gui;
 
+import gui.saveState.SaveAndRestoreState;
 import log.LogChangeListener;
 import log.LogEntry;
 import log.LogWindowSource;

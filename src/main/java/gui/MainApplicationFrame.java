@@ -83,12 +83,9 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         addWindow(logWindow);
 
         // Создание и добавление игрового окна
-        RobotModel model = new RobotModel();
-        GameWindow gameWindow = new GameWindow(model);
-        RobotPositionWindow positionWindow = new RobotPositionWindow(model);
+        GameWindow gameWindow = new GameWindow();
         gameWindow.setSize(400,  400);
         addWindow(gameWindow);
-        addWindow(positionWindow);
 
         // Установка меню
         setJMenuBar(generateMenuBar());
@@ -104,7 +101,6 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         stateManager.register(this);
         stateManager.register(logWindow);
         stateManager.register(gameWindow);
-        stateManager.register(positionWindow);
 
         Map<String, String> root = stateIO.load();
         stateManager.loadAll(root);
@@ -121,6 +117,9 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         logWindow.setLocation(10,10);
         logWindow.setSize(300, 800);
 
+        // Устанавливаем минимальный размер главного окна
+        //setMinimumSize(logWindow.getSize());
+        //logWindow.pack();
         Logger.debug("Протокол работает");
         return logWindow;
     }
