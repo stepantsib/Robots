@@ -6,6 +6,8 @@ import log.LogEntry;
 import log.LogWindowSource;
 
 import javax.swing.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
 import java.awt.*;
 import java.util.Map;
 
@@ -33,6 +35,14 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Save
         super("Протокол работы", true, true, true, true);
         this.logSource = logSource;
         this.logSource.registerListener(this);
+
+        addInternalFrameListener(new InternalFrameAdapter() {
+            @Override
+            public void internalFrameClosed(InternalFrameEvent e) {
+                logSource.unregisterListener(LogWindow.this);
+            }
+        });
+
         this.logContent = new TextArea("");
         this.logContent.setSize(200, 500);
 

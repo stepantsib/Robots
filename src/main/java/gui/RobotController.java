@@ -1,5 +1,7 @@
 package gui;
 
+import log.Logger;
+
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -31,6 +33,7 @@ public class RobotController {
             @Override
             public void mouseClicked(MouseEvent e) {
                 model.setTargetPosition(e.getX(), e.getY());
+                Logger.debug(String.format("Target position changed to (%d, %d)", e.getX(), e.getY()));
             }
         });
 

@@ -28,36 +28,6 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
      * Координатор сохранения и восстановления состояния всех компонентов.
      */
     private final StateManager stateManager = new StateManager();
-
-
-    @Override
-    public String getStatePrefix() {
-        return "main";
-    }
-
-    @Override
-    public void saveState(Map<String, String> map) {
-        map.put("x", String.valueOf(getX()));
-        map.put("y", String.valueOf(getY()));
-        map.put("w", String.valueOf(getWidth()));
-        map.put("h", String.valueOf(getHeight()));
-        map.put("state", String.valueOf(getExtendedState()));
-    }
-
-    @Override
-    public void loadState(Map<String, String> map) {
-        try {
-            int x = Integer.parseInt(map.get("x"));
-            int y = Integer.parseInt(map.get("y"));
-            int w = Integer.parseInt(map.get("w"));
-            int h = Integer.parseInt(map.get("h"));
-            int state = Integer.parseInt(map.get("state"));
-
-            setBounds(x, y, w, h);
-            setExtendedState(state);
-        } catch (Exception ignored) {}
-    }
-
     /**
      * Рабочая область главного окна.
      * Используется для размещения внутренних окон приложения.
@@ -75,9 +45,7 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
 
         // Установка размеров главного окна
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setBounds(inset, inset,
-            screenSize.width  - inset*2,
-            screenSize.height - inset*2);
+        setBounds(inset, inset, screenSize.width - inset * 2, screenSize.height - inset * 2);
 
         setContentPane(desktopPane);
 
@@ -90,7 +58,7 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         RobotController controller = new RobotController(model, gameVisualizer);
         // Создание и добавление игрового окна
         GameWindow gameWindow = new GameWindow();
-        gameWindow.setSize(400,  400);
+        gameWindow.setSize(400, 400);
         gameWindow.setContentPane(gameVisualizer);
         addWindow(gameWindow);
         RobotInfoWindow robotInfoWindow = new RobotInfoWindow(model);
@@ -118,15 +86,43 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         controller.start();
     }
 
+    @Override
+    public String getStatePrefix() {
+        return "main";
+    }
+
+    @Override
+    public void saveState(Map<String, String> map) {
+        map.put("x", String.valueOf(getX()));
+        map.put("y", String.valueOf(getY()));
+        map.put("w", String.valueOf(getWidth()));
+        map.put("h", String.valueOf(getHeight()));
+        map.put("state", String.valueOf(getExtendedState()));
+    }
+
+    @Override
+    public void loadState(Map<String, String> map) {
+        try {
+            int x = Integer.parseInt(map.get("x"));
+            int y = Integer.parseInt(map.get("y"));
+            int w = Integer.parseInt(map.get("w"));
+            int h = Integer.parseInt(map.get("h"));
+            int state = Integer.parseInt(map.get("state"));
+
+            setBounds(x, y, w, h);
+            setExtendedState(state);
+        } catch (Exception ignored) {
+        }
+    }
+
     /**
      * Создаёт и настраивает окно логирования.
      *
      * @return готовое окно логов
      */
-    protected LogWindow createLogWindow()
-    {
+    protected LogWindow createLogWindow() {
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
-        logWindow.setLocation(10,10);
+        logWindow.setLocation(10, 10);
         logWindow.setSize(300, 800);
 
         Logger.debug("Протокол работает");
@@ -139,8 +135,7 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
      *
      * @param frame добавляемое внутреннее окно
      */
-    protected void addWindow(JInternalFrame frame)
-    {
+    protected void addWindow(JInternalFrame frame) {
         desktopPane.add(frame);
         frame.setVisible(true);
     }
@@ -150,8 +145,7 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
      *
      * @return панель меню
      */
-    private JMenuBar generateMenuBar()
-    {
+    private JMenuBar generateMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
         JMenu lookAndFeelMenu = modeOfDisplay();
@@ -176,8 +170,7 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         // Меню переключения режима отображения
         JMenu lookAndFeelMenu = new JMenu("Режим отображения");
         lookAndFeelMenu.setMnemonic(KeyEvent.VK_V);
-        lookAndFeelMenu.getAccessibleContext().setAccessibleDescription(
-                "Управление режимом отображения приложения");
+        lookAndFeelMenu.getAccessibleContext().setAccessibleDescription("Управление режимом отображения приложения");
 
         // Пункт выбора системной темы
         JMenuItem systemLookAndFeel = new JMenuItem("Системная схема", KeyEvent.VK_S);
@@ -208,8 +201,7 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         // Тестовое меню
         JMenu testMenu = new JMenu("Тесты");
         testMenu.setMnemonic(KeyEvent.VK_T);
-        testMenu.getAccessibleContext().setAccessibleDescription(
-                "Тестовые команды");
+        testMenu.getAccessibleContext().setAccessibleDescription("Тестовые команды");
 
         // Пункт добавления сообщения в лог
         JMenuItem addLogMessageItem = new JMenuItem("Сообщение в лог", KeyEvent.VK_S);
@@ -217,6 +209,12 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
             Logger.debug("Новая строка");
         });
         testMenu.add(addLogMessageItem);
+
+        JMenuItem anotherLogMessageItem = new JMenuItem("Другое сообщение в лог", KeyEvent.VK_D);
+        anotherLogMessageItem.addActionListener((event) -> {
+            Logger.debug("Тестовое сообщение в лог");
+        });
+        testMenu.add(anotherLogMessageItem);
 
         return testMenu;
     }
@@ -232,9 +230,7 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
         JMenu exitMenu = new JMenu("Файл");
         exitMenu.setMnemonic(KeyEvent.VK_Z);
         JMenuItem exitFromProgram = new JMenuItem("Выход", KeyEvent.VK_C);
-        exitFromProgram.addActionListener(event ->
-                exitApplication()
-        );
+        exitFromProgram.addActionListener(event -> exitApplication());
         exitMenu.add(exitFromProgram);
 
         return exitMenu;
@@ -247,16 +243,7 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
      */
     private void exitApplication() {
 
-        int result = JOptionPane.showOptionDialog(
-                this,
-                "Вы действительно хотите выйти?",
-                "Подтверждение",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                new String[]{"Да", "Нет"},
-                "Нет"
-        );
+        int result = JOptionPane.showOptionDialog(this, "Вы действительно хотите выйти?", "Подтверждение", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, new String[]{"Да", "Нет"}, "Нет");
 
         if (result == JOptionPane.YES_OPTION) {
             Map<String, String> root = stateManager.saveAll();
@@ -273,18 +260,14 @@ public class MainApplicationFrame extends JFrame implements SaveAndRestoreState 
      *
      * @param className имя класса темы оформления
      */
-    private void setLookAndFeel(String className)
-    {
-        try
-        {
+    private void setLookAndFeel(String className) {
+        try {
             UIManager.setLookAndFeel(className);
 
             // Обновление всех компонентов окна
             SwingUtilities.updateComponentTreeUI(this);
-        }
-        catch (ClassNotFoundException | InstantiationException
-            | IllegalAccessException | UnsupportedLookAndFeelException e)
-        {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                 UnsupportedLookAndFeelException e) {
             // just ignore
         }
     }
