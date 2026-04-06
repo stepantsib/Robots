@@ -2,7 +2,8 @@ package log;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Потокобезопасный источник логов с ограниченным размером.
@@ -16,7 +17,7 @@ public class LogWindowSource {
     private final int queueLength;
 
     /** Потокобезопасное хранилище сообщений */
-    private final CopyOnWriteArrayList<LogEntry> messages;
+    private final ArrayBlockingQueue<LogEntry> messages;
 
     /** Кэш слушателей для оптимизации уведомлений */
     private volatile LogChangeListener[] activeListeners;
@@ -26,7 +27,7 @@ public class LogWindowSource {
      */
     public LogWindowSource(int iQueueLength) {
         queueLength = iQueueLength;
-        messages = new CopyOnWriteArrayList<>();
+        messages = new ArrayBlockingQueue<>(iQueueLength);
         listeners = new ArrayList<>();
     }
 
@@ -50,10 +51,9 @@ public class LogWindowSource {
     public void append(LogLevel logLevel, String strMessage) {
         LogEntry entry = new LogEntry(logLevel, strMessage);
 
-        messages.add(entry);
-
-        while (messages.size() > queueLength) {
-            messages.removeFirst();
+        if (!messages.offer(entry)) {
+            messages.poll();
+            messages.offer(entry);
         }
 
         LogChangeListener[] activeListeners = this.activeListeners;
@@ -82,8 +82,9 @@ public class LogWindowSource {
         if (startFrom < 0 || startFrom >= messages.size()) {
             return Collections.emptyList();
         }
-        int indexTo = Math.min(startFrom + count, messages.size());
-        return messages.subList(startFrom, indexTo);
+        List<LogEntry> snapshot = new ArrayList<>(messages);
+        int indexTo = Math.min(startFrom + count, snapshot.size());
+        return snapshot.subList(startFrom, indexTo);
     }
 
     /** Возвращает все сообщения */
