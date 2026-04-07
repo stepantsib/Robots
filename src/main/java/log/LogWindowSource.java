@@ -27,7 +27,7 @@ public class LogWindowSource {
      */
     public LogWindowSource(int iQueueLength) {
         queueLength = iQueueLength;
-        messages = new ArrayBlockingQueue<>(iQueueLength);
+        messages = new ArrayBlockingQueue<>(queueLength);
         listeners = new ArrayList<>();
     }
 
@@ -89,6 +89,6 @@ public class LogWindowSource {
 
     /** Возвращает все сообщения */
     public Iterable<LogEntry> all() {
-        return messages;
+        return new ArrayList<>(messages);
     }
 }
