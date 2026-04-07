@@ -89,6 +89,6 @@ public class LogWindowSource {
 
     /** Возвращает все сообщения */
     public Iterable<LogEntry> all() {
-        return messages;
+        return new ArrayList<>(messages);
     }
 }
