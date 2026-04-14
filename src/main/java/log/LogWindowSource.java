@@ -1,25 +1,30 @@
 package log;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Потокобезопасный источник логов с ограниченным размером.
  */
 public class LogWindowSource {
 
-    /** Список зарегистрированных слушателей */
+    /**
+     * Список зарегистрированных слушателей
+     */
     private final ArrayList<LogChangeListener> listeners;
 
-    /** Максимальный размер лога */
+    /**
+     * Максимальный размер лога
+     */
     private final int queueLength;
 
-    /** Потокобезопасное хранилище сообщений */
-    private final ArrayBlockingQueue<LogEntry> messages;
+    /**
+     * Потокобезопасное хранилище сообщений
+     */
+    private final LimitedList<LogEntry> messages;
 
-    /** Кэш слушателей для оптимизации уведомлений */
+    /**
+     * Кэш слушателей для оптимизации уведомлений
+     */
     private volatile LogChangeListener[] activeListeners;
 
     /**
@@ -27,11 +32,13 @@ public class LogWindowSource {
      */
     public LogWindowSource(int iQueueLength) {
         queueLength = iQueueLength;
-        messages = new ArrayBlockingQueue<>(iQueueLength);
+        messages = new LimitedList<>(queueLength);
         listeners = new ArrayList<>();
     }
 
-    /** Регистрирует слушателя изменений лога */
+    /**
+     * Регистрирует слушателя изменений лога
+     */
     public void registerListener(LogChangeListener listener) {
         synchronized (listeners) {
             listeners.add(listener);
@@ -39,7 +46,9 @@ public class LogWindowSource {
         }
     }
 
-    /** Удаляет слушателя */
+    /**
+     * Удаляет слушателя
+     */
     public void unregisterListener(LogChangeListener listener) {
         synchronized (listeners) {
             listeners.remove(listener);
@@ -47,14 +56,13 @@ public class LogWindowSource {
         }
     }
 
-    /** Добавляет сообщение в лог и уведомляет слушателей */
+    /**
+     * Добавляет сообщение в лог и уведомляет слушателей
+     */
     public void append(LogLevel logLevel, String strMessage) {
         LogEntry entry = new LogEntry(logLevel, strMessage);
 
-        if (!messages.offer(entry)) {
-            messages.poll();
-            messages.offer(entry);
-        }
+        messages.add(entry);
 
         LogChangeListener[] activeListeners = this.activeListeners;
 
@@ -72,23 +80,24 @@ public class LogWindowSource {
         }
     }
 
-    /** Возвращает текущее количество сообщений */
+    /**
+     * Возвращает текущее количество сообщений
+     */
     public int size() {
         return messages.size();
     }
 
-    /** Возвращает диапазон сообщений по индексам */
+    /**
+     * Возвращает диапазон сообщений по индексам
+     */
     public Iterable<LogEntry> range(int startFrom, int count) {
-        if (startFrom < 0 || startFrom >= messages.size()) {
-            return Collections.emptyList();
-        }
-        List<LogEntry> snapshot = new ArrayList<>(messages);
-        int indexTo = Math.min(startFrom + count, snapshot.size());
-        return snapshot.subList(startFrom, indexTo);
+        return messages.range(startFrom, count);
     }
 
-    /** Возвращает все сообщения */
+    /**
+     * Возвращает все сообщения
+     */
     public Iterable<LogEntry> all() {
-        return new ArrayList<>(messages);
+        return messages.all();
     }
 }
