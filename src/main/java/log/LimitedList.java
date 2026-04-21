@@ -44,15 +44,16 @@ public class LimitedList<T> {
         return list.size();
     }
 
+
     /**
-     * Возвращает диапазон сообщений по индексам
+     * Возвращает все сообщения
      */
     public synchronized Iterable<T> all() {
         return new ArrayList<>(list);
     }
 
     /**
-     * Возвращает все сообщения
+     * Возвращает диапазон сообщений по индексам
      */
     public synchronized Iterable<T> range(int startFrom, int count) {
         return new ArrayList<>(list).subList(startFrom, startFrom + count);
