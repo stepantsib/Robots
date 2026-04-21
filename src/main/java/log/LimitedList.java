@@ -29,7 +29,7 @@ public class LimitedList<T> {
     }
 
     public synchronized Iterable<T> range(int startFrom, int count) {
-        return new ArrayList<>(list).subList(startFrom, startFrom + count);
+        return new ArrayList<>(list).subList(startFrom, count);
     }
 
 }
