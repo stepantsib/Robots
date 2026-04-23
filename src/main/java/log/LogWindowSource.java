@@ -1,6 +1,6 @@
 package log;
 
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Потокобезопасный источник логов с ограниченным размером.
@@ -10,7 +10,7 @@ public class LogWindowSource {
     /**
      * Список зарегистрированных слушателей
      */
-    private final ArrayList<LogChangeListener> listeners;
+    private final Set<LogChangeListener> listeners = Collections.newSetFromMap(new WeakHashMap<>());
 
     /**
      * Максимальный размер лога
@@ -23,17 +23,11 @@ public class LogWindowSource {
     private final LimitedList<LogEntry> messages;
 
     /**
-     * Кэш слушателей для оптимизации уведомлений
-     */
-    private volatile LogChangeListener[] activeListeners;
-
-    /**
      * Конструктор - создаёт источник лога с указанным максимальным размером.
      */
     public LogWindowSource(int iQueueLength) {
         queueLength = iQueueLength;
         messages = new LimitedList<>(queueLength);
-        listeners = new ArrayList<>();
     }
 
     /**
@@ -42,7 +36,6 @@ public class LogWindowSource {
     public void registerListener(LogChangeListener listener) {
         synchronized (listeners) {
             listeners.add(listener);
-            activeListeners = null;
         }
     }
 
@@ -52,7 +45,6 @@ public class LogWindowSource {
     public void unregisterListener(LogChangeListener listener) {
         synchronized (listeners) {
             listeners.remove(listener);
-            activeListeners = null;
         }
     }
 
@@ -64,15 +56,10 @@ public class LogWindowSource {
 
         messages.add(entry);
 
-        LogChangeListener[] activeListeners = this.activeListeners;
+        List<LogChangeListener> activeListeners;
 
-        if (activeListeners == null) {
-            synchronized (listeners) {
-                if (this.activeListeners == null) {
-                    activeListeners = listeners.toArray(new LogChangeListener[0]);
-                    this.activeListeners = activeListeners;
-                }
-            }
+        synchronized (listeners) {
+            activeListeners = new ArrayList<>(listeners);
         }
 
         for (LogChangeListener listener : activeListeners) {

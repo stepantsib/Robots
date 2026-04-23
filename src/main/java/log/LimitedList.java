@@ -2,6 +2,7 @@ package log;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Потокобезопасная структура с ограниченным размером
@@ -17,7 +18,7 @@ public class LimitedList<T> {
     /**
      * Список
      */
-    private final LinkedList<T> list;
+    private final List<T> list;
 
     /**
     * Конструктор класса
